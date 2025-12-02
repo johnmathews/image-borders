@@ -4,6 +4,7 @@
 import argparse
 import logging
 from pathlib import Path
+from typing import cast
 
 from PIL import Image
 
@@ -36,7 +37,11 @@ def find_content_bounds(
     for x in range(width):
         for y in range(height):
             pixel = pixels[x, y]
-            current_color = (int(pixel),) if isinstance(pixel, (int, float)) else tuple(int(c) for c in pixel)
+            current_color = (
+                (int(pixel),)
+                if isinstance(pixel, (int, float))
+                else tuple(int(c) for c in pixel)
+            )
             if current_color != border_color:
                 left = max(0, x - padding)
                 break
@@ -49,7 +54,11 @@ def find_content_bounds(
     for x in range(width - 1, -1, -1):
         for y in range(height):
             pixel = pixels[x, y]
-            current_color = (int(pixel),) if isinstance(pixel, (int, float)) else tuple(int(c) for c in pixel)
+            current_color = (
+                (int(pixel),)
+                if isinstance(pixel, (int, float))
+                else tuple(int(c) for c in pixel)
+            )
             if current_color != border_color:
                 right = min(width, x + 1 + padding)
                 break
@@ -62,7 +71,11 @@ def find_content_bounds(
     for y in range(height):
         for x in range(width):
             pixel = pixels[x, y]
-            current_color = (int(pixel),) if isinstance(pixel, (int, float)) else tuple(int(c) for c in pixel)
+            current_color = (
+                (int(pixel),)
+                if isinstance(pixel, (int, float))
+                else tuple(int(c) for c in pixel)
+            )
             if current_color != border_color:
                 top = max(0, y - padding)
                 break
@@ -75,7 +88,11 @@ def find_content_bounds(
     for y in range(height - 1, -1, -1):
         for x in range(width):
             pixel = pixels[x, y]
-            current_color = (int(pixel),) if isinstance(pixel, (int, float)) else tuple(int(c) for c in pixel)
+            current_color = (
+                (int(pixel),)
+                if isinstance(pixel, (int, float))
+                else tuple(int(c) for c in pixel)
+            )
             if current_color != border_color:
                 bottom = min(height, y + 1 + padding)
                 break
@@ -118,11 +135,23 @@ def process_image(
             top_border = top
             bottom_border = height - bottom
 
-            logger.info("  Border widths - L:%d R:%d T:%d B:%d", left_border, right_border, top_border, bottom_border)
+            logger.info(
+                "  Border widths - L:%d R:%d T:%d B:%d",
+                left_border,
+                right_border,
+                top_border,
+                bottom_border,
+            )
             logger.info("  New size: %dx%d", crop_width, crop_height)
 
             if dry_run:
-                logger.info("  Action: DRY-RUN - Would crop to (%d, %d, %d, %d)", left, top, right, bottom)
+                logger.info(
+                    "  Action: DRY-RUN - Would crop to (%d, %d, %d, %d)",
+                    left,
+                    top,
+                    right,
+                    bottom,
+                )
                 return
 
             # Create output directory if it doesn't exist
@@ -134,7 +163,9 @@ def process_image(
             # Crop and save
             cropped = img.crop((left, top, right, bottom))
             cropped.save(output_path)
-            logger.info("  Action: CROPPED - Saved to %s with %dpx border", output_path, padding)
+            logger.info(
+                "  Action: CROPPED - Saved to %s with %dpx border", output_path, padding
+            )
 
     except Exception as e:
         logger.error("  Error processing %s: %s", file_path, e)
@@ -146,14 +177,15 @@ def process_directory(
     """Recursively process all images in a directory."""
     logger = logging.getLogger(__name__)
 
-    logger.info("\n%s", "="*80)
+    logger.info("\n%s", "=" * 80)
     logger.info("Scanning directory: %s", directory)
-    logger.info("%s", "="*80)
+    logger.info("%s", "=" * 80)
 
     # Find all image files
     image_extensions = {".jpg", ".jpeg", ".png"}
     image_files = [
-        f for f in directory.rglob("*")
+        f
+        for f in directory.rglob("*")
         if f.is_file() and f.suffix.lower() in image_extensions
     ]
 
@@ -193,8 +225,8 @@ def main() -> None:
         "-p",
         "--padding",
         type=int,
-        default=50,
-        help="Number of border pixels to keep (default: 50)",
+        default=5,
+        help="Number of border pixels to keep (default: 5)",
     )
     _ = parser.add_argument(
         "-o",
@@ -211,21 +243,19 @@ def main() -> None:
         help="Path to log file (default: shrink-borders.log)",
     )
     _ = parser.add_argument(
-        "--no-dry-run",
+        "--dry-run",
         action="store_true",
-        help="Actually process files (default is dry-run mode)",
+        help="Preview changes without processing files (default is live mode)",
     )
 
     args = parser.parse_args()
 
-    # Invert the logic: dry_run is True by default unless --no-dry-run is specified
-    no_dry_run = bool(args.no_dry_run)
-    dry_run = not no_dry_run
-
-    directory = args.directory if isinstance(args.directory, Path) else Path(str(args.directory))
-    padding = args.padding if isinstance(args.padding, int) else int(args.padding)
-    output_dir = args.output_dir if isinstance(args.output_dir, Path) else Path(str(args.output_dir))
-    log_file = args.log_file if isinstance(args.log_file, Path) else Path(str(args.log_file))
+    # Extract typed values from argparse namespace
+    dry_run: bool = cast(bool, args.dry_run)
+    directory: Path = cast(Path, args.directory)
+    padding: int = cast(int, args.padding)
+    output_dir: Path = cast(Path, args.output_dir)
+    log_file: Path = cast(Path, args.log_file)
 
     if not directory.exists():
         print(f"Error: Directory '{directory}' does not exist")
@@ -238,24 +268,24 @@ def main() -> None:
     setup_logging(log_file)
     logger = logging.getLogger(__name__)
 
-    logger.info("%s", "="*80)
+    logger.info("%s", "=" * 80)
     logger.info("SHRINK BORDERS - Image Border Removal Tool")
-    logger.info("%s", "="*80)
+    logger.info("%s", "=" * 80)
     logger.info("Directory: %s", directory)
     logger.info("Padding: %d pixels", padding)
     logger.info("Output directory: %s", output_dir)
     logger.info("Log file: %s", log_file)
     logger.info("Mode: %s", "DRY-RUN" if dry_run else "LIVE")
-    logger.info("%s", "="*80)
+    logger.info("%s", "=" * 80)
 
     process_directory(directory, padding, output_dir, dry_run)
 
-    logger.info("\n%s", "="*80)
+    logger.info("\n%s", "=" * 80)
     logger.info("Processing complete!")
     logger.info("Log saved to: %s", log_file)
     if not dry_run:
         logger.info("Processed images saved to: %s", output_dir)
-    logger.info("%s", "="*80)
+    logger.info("%s", "=" * 80)
 
 
 if __name__ == "__main__":
