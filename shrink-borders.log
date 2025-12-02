@@ -3,7 +3,7 @@ SHRINK BORDERS - Image Border Removal Tool
 ================================================================================
 Directory: test-images
 Padding: 5 pixels
-Output directory: processed-images
+Output directory: test-output
 Log file: shrink-borders.log
 Mode: LIVE
 ================================================================================
@@ -11,62 +11,63 @@ Mode: LIVE
 ================================================================================
 Scanning directory: test-images
 ================================================================================
-Found 9 image(s)
-Processing: test-images/Screenshot 2025-01-20 at 14.26.21.png
-  Original size: 3894x2516
-  Action: SKIP - No uniform border detected (corners don't match)
-Processing: test-images/Screenshot 2025-01-20 at 14.26.49.png
-  Original size: 3894x2516
-  Action: SKIP - No uniform border detected (corners don't match)
-Processing: test-images/Screenshot 2025-01-20 at 14.26.53.png
-  Original size: 3894x2516
-  Action: SKIP - No uniform border detected (corners don't match)
-Processing: test-images/Screenshot 2025-01-20 at 14.27.18.png
-  Original size: 3894x2516
-  Action: SKIP - No uniform border detected (corners don't match)
-Processing: test-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m33s.jpg
-  Original size: 2288x1863
-  Border color (4 corners match): (253, 253, 253)
-  Detected borders - L:0 R:0 T:0 B:6
-  Max border: 6px
-  Content size: 2288x1857
-  New size with uniform 5px border: 2298x1867
-  Action: UNIFORM BORDERS APPLIED - Saved to processed-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m33s.jpg with 5px border on all sides
-Processing: test-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m38s.jpg
-  Original size: 2299x1870
-  Border color (4 corners match): (253, 253, 253)
-  Detected borders - L:15 R:10 T:0 B:13
-  Max border: 15px
-  Content size: 2274x1857
-  New size with uniform 5px border: 2284x1867
-  Action: UNIFORM BORDERS APPLIED - Saved to processed-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m38s.jpg with 5px border on all sides
-Processing: test-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m43s.jpg
-  Original size: 2299x1871
-  Border color (4 corners match): (253, 253, 253)
-  Detected borders - L:15 R:10 T:0 B:14
-  Max border: 15px
-  Content size: 2274x1857
-  New size with uniform 5px border: 2284x1867
-  Action: UNIFORM BORDERS APPLIED - Saved to processed-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m43s.jpg with 5px border on all sides
-Processing: test-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m47s.jpg
-  Original size: 1563x1907
-  Border color (4 corners match): (253, 253, 253)
-  Detected borders - L:15 R:10 T:0 B:2
-  Max border: 15px
-  Content size: 1538x1905
-  New size with uniform 5px border: 1548x1915
-  Action: UNIFORM BORDERS APPLIED - Saved to processed-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m47s.jpg with 5px border on all sides
-Processing: test-images/i-bought-my-dream-porsche-and-drove-it-across-california_17m28s.jpg
-  Original size: 2351x1916
-  Border color (4 corners match): (253, 253, 253)
-  Detected borders - L:6 R:0 T:0 B:11
-  Max border: 11px
-  Content size: 2345x1905
-  New size with uniform 5px border: 2355x1915
-  Action: UNIFORM BORDERS APPLIED - Saved to processed-images/i-bought-my-dream-porsche-and-drove-it-across-california_17m28s.jpg with 5px border on all sides
+Found 7 image(s)
+Processing: test-images/Screenshot 2024-09-04 at 10.57.15.png
+  Original size: 2370x1679
+  Border color (4 corners match): (252, 242, 230, 255)
+  Detected borders - L:5 R:5 T:5 B:5
+  Max border: 5px
+  Content size: 2360x1669
+  New size with uniform 5px border: 2370x1679
+  Action: UNIFORM BORDERS APPLIED - Saved to test-output/Screenshot 2024-09-04 at 10.57.15.png with 5px border on all sides
+Processing: test-images/Screenshot 2024-09-04 at 11.13.24.png
+  Original size: 1410x2147
+  Border color (4 corners match): (252, 242, 230, 255)
+  Detected borders - L:5 R:5 T:5 B:3
+  Max border: 5px
+  Content size: 1400x2139
+  New size with uniform 5px border: 1410x2149
+  Action: UNIFORM BORDERS APPLIED - Saved to test-output/Screenshot 2024-09-04 at 11.13.24.png with 5px border on all sides
+Processing: test-images/Screenshot 2024-09-04 at 11.13.50.png
+  Original size: 2370x1827
+  Border color (4 corners match): (252, 242, 230, 255)
+  Detected borders - L:5 R:5 T:5 B:5
+  Max border: 5px
+  Content size: 2360x1817
+  New size with uniform 5px border: 2370x1827
+  Action: UNIFORM BORDERS APPLIED - Saved to test-output/Screenshot 2024-09-04 at 11.13.50.png with 5px border on all sides
+Processing: test-images/Screenshot 2024-10-01 at 20.43.37.png
+  Original size: 2993x2018
+  Border color (4 corners match): (255, 255, 255, 255)
+  Detected borders - L:5 R:5 T:5 B:5
+  Max border: 5px
+  Content size: 2983x2008
+  New size with uniform 5px border: 2993x2018
+  Action: UNIFORM BORDERS APPLIED - Saved to test-output/Screenshot 2024-10-01 at 20.43.37.png with 5px border on all sides
+Processing: test-images/Screenshot 2024-10-01 at 20.43.41.png
+  Original size: 2969x1993
+  Border color (4 corners match): (255, 255, 255, 255)
+  Detected borders - L:5 R:5 T:5 B:5
+  Max border: 5px
+  Content size: 2959x1983
+  New size with uniform 5px border: 2969x1993
+  Action: UNIFORM BORDERS APPLIED - Saved to test-output/Screenshot 2024-10-01 at 20.43.41.png with 5px border on all sides
+Processing: test-images/Screenshot 2024-10-01 at 20.43.50.png
+  Original size: 2991x1996
+  Border color (4 corners match): (255, 255, 255, 255)
+  Detected borders - L:5 R:5 T:5 B:5
+  Max border: 5px
+  Content size: 2981x1986
+  New size with uniform 5px border: 2991x1996
+  Action: UNIFORM BORDERS APPLIED - Saved to test-output/Screenshot 2024-10-01 at 20.43.50.png with 5px border on all sides
+Processing: test-images/test-no-border.png
+  Original size: 200x200
+  Border color: No uniform border detected (corners don't match)
+  Action: Adding 5px uniform border to entire image
+  Action: UNIFORM BORDER ADDED - Saved to test-output/test-no-border.png with 5px border on all sides
 
 ================================================================================
 Processing complete!
 Log saved to: shrink-borders.log
-Processed images saved to: processed-images
+Processed images saved to: test-output
 ================================================================================

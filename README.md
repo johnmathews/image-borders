@@ -5,17 +5,14 @@
 This script removes uniform color borders from images and applies exactly uniform borders on all sides.
 
 - Scans directories recursively for `.jpg`, `.jpeg`, `.png` files
-- Detects uniform color borders by checking all 4 corners (must all match)
-- Removes all existing borders (regardless of size or uniformity)
-- Adds back exactly uniform borders of your specified width on all sides
+- Detects uniform color borders by checking all 4 corners
+- **If borders detected**: Removes all existing borders and adds back uniform borders
+- **If no borders detected**: Adds uniform borders to the entire image (using white)
 - Saves processed images to a separate output directory
 - Logs all processing decisions to a log file
 
-The script requires all 4 corners to have the same color to detect a border. This prevents false positives like white
-skies being treated as borders. It won't work with gradients or multi-colored borders.
-
 **Key feature**: All output images will have exactly equal borders on all 4 sides, regardless of whether the input
-had unequal, wonky, or missing borders.
+had unequal, wonky, missing, or no borders at all.
 
 ## How to Use It
 
@@ -71,13 +68,17 @@ The output shows:
 - The content size after removing all borders
 - The final size with exactly 5px uniform borders on all sides
 
-When corners don't match:
+When no uniform border is detected (corners don't match):
 
 ```text
 Processing: photo-with-sky.jpg
   Original size: 1920x1080
-  Action: SKIP - No uniform border detected (corners don't match)
+  Border color: No uniform border detected (corners don't match)
+  Action: Adding 5px uniform border to entire image
+  Action: UNIFORM BORDER ADDED - Saved to processed-images/photo-with-sky.jpg with 5px border on all sides
 ```
+
+In this case, a white border is added around the entire image without removing anything.
 
 ### Requirements
 
@@ -88,12 +89,14 @@ Processing: photo-with-sky.jpg
 
 - **By default, images are modified in-place** (originals overwritten)
 - Use `-o` flag to save processed images to a separate directory (preserves originals)
-- Images are skipped if all 4 corners don't have the same color (no uniform border detected)
 - **All processed images will have exactly uniform borders** on all 4 sides equal to the padding value
-- The algorithm:
+- The algorithm for images WITH uniform borders:
   1. Detects where content starts/ends on each edge
   2. Crops to pure content (removes ALL existing borders)
   3. Adds uniform border of exactly the specified padding to all sides
+- For images WITHOUT uniform borders (corners don't match):
+  - Adds a white border around the entire image
+  - No content is removed
 - Works with unequal borders (e.g., L:15 R:10 T:0 B:13) - output will be uniform (5px on all sides)
 - Always use `--dry-run` first to preview changes before processing
 

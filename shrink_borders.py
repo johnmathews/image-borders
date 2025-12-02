@@ -168,8 +168,39 @@ def process_image(
             logger.info("  Original size: %dx%d", width, height)
 
             if border_color is None:
+                # No uniform border detected - add border to entire image
+                logger.info("  Border color: No uniform border detected (corners don't match)")
+                logger.info("  Action: Adding %dpx uniform border to entire image", padding)
+
+                if dry_run:
+                    logger.info("  Action: DRY-RUN - Would add %dpx uniform border", padding)
+                    return
+
+                # Use white as default border color for images without borders
+                # Determine if image is grayscale or color
+                if img.mode == 'L':
+                    fill_color = 255  # White for grayscale
+                elif img.mode in ('RGB', 'RGBA'):
+                    fill_color = (255, 255, 255) if img.mode == 'RGB' else (255, 255, 255, 255)
+                else:
+                    # For other modes, convert to RGB first
+                    img = img.convert('RGB')
+                    fill_color = (255, 255, 255)
+
+                # Add uniform border to entire image
+                result = ImageOps.expand(img, border=padding, fill=fill_color)
+
+                # Determine output path and save
+                if output_dir:
+                    output_path = output_dir / file_path.name
+                else:
+                    output_path = file_path
+
+                result.save(output_path)
                 logger.info(
-                    "  Action: SKIP - No uniform border detected (corners don't match)"
+                    "  Action: UNIFORM BORDER ADDED - Saved to %s with %dpx border on all sides",
+                    output_path,
+                    padding,
                 )
                 return
 

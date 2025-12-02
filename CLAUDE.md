@@ -36,13 +36,15 @@ uv run python shrink_borders.py test-images -p 10
 flow:
 
 1. **Border detection**: Checks all 4 corners - if they all match, uses
-   that color as border reference. If corners don't match, skips the image
-   (prevents false positives like white skies)
-2. **Content bounds**: Scans from all four edges inward to find first
-   non-border pixel on each edge
-3. **Uniform border application**: Two-step process:
-   - Crop to pure content (removes ALL existing borders completely)
-   - Add uniform border of exactly P pixels to all 4 sides using ImageOps.expand()
+   that color as border reference. If corners don't match, adds white border
+   to entire image without removing content
+2. **Content bounds** (for images with uniform borders): Scans from all four
+   edges inward to find first non-border pixel on each edge
+3. **Uniform border application**:
+   - **With uniform border detected**: Two-step process - crop to pure content
+     (removes ALL existing borders), then add uniform border of exactly P pixels
+     to all 4 sides using ImageOps.expand()
+   - **No uniform border detected**: Add white border directly to entire image
 4. **Output**: By default modifies images in-place. If `-o` flag provided,
    saves to separate output directory (preserves originals)
 5. **Logging**: Dual output to both console and log file showing detected
@@ -58,11 +60,11 @@ Key functions:
 
 ## Important Constraints
 
-- Borders must be single uniform color (no gradients or multi-color)
-- All 4 corners must match to detect a border (prevents false positives)
+- For border removal: Borders must be single uniform color (no gradients or multi-color)
+- All 4 corners must match to detect a border - if they don't match, white border is added
 - Default behavior modifies images in-place (use `-o` to preserve originals)
 - **All output images have exactly uniform borders on all 4 sides**
-- Works with any input border configuration (unequal, wonky, missing, etc.)
+- Works with any input border configuration (unequal, wonky, missing, or none)
 - Python >=3.13 required
 - Keep code simple and readable - tactical tool, not production-grade
 - Use typed Python throughout
