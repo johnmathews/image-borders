@@ -8,7 +8,8 @@
       "Bash(git -C /Users/john/projects/photo-video/shrink-borders diff HEAD -- shrink_borders.py)",
       "Bash(git -C /Users/john/projects/photo-video/shrink-borders status --short)",
       "Bash(python3:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(git -C /Users/john/projects/photo-video/shrink-borders remote:*)"
     ],
     "deny": [],
     "ask": []
