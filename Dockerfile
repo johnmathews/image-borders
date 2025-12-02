@@ -55,5 +55,5 @@ VOLUME ["/images", "/output"]
 # Use entrypoint script
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-# Default command shows help
-CMD ["--help"]
+# Default command is empty - will use environment variables
+CMD []

@@ -36,12 +36,12 @@ Multi-stage build optimizes for size and security:
 
 The container expects two volume mounts:
 
-| Mount Point | Purpose | Required |
-|-------------|---------|----------|
-| `/images` | Input directory to scan for images | Yes |
-| `/output` | Output directory for processed images and logs | Optional* |
+| Mount Point | Purpose                                        | Required   |
+| ----------- | ---------------------------------------------- | ---------- |
+| `/images`   | Input directory to scan for images             | Yes        |
+| `/output`   | Output directory for processed images and logs | Optional\* |
 
-*If `/output` is not mounted, images are modified in-place in `/images`.
+\*If `/output` is not mounted, images are modified in-place in `/images`.
 
 ### Auto-detect Behavior
 
@@ -55,13 +55,13 @@ The container intelligently detects your intent:
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SHRINK_BORDERS_INPUT_DIR` | `/images` | Input directory path |
-| `SHRINK_BORDERS_PADDING` | `5` | Border width in pixels |
-| `SHRINK_BORDERS_OUTPUT_DIR` | (empty) | Output directory; empty triggers auto-detect |
-| `SHRINK_BORDERS_LOG_FILE` | `/output/shrink-borders.log` | Log file path |
-| `SHRINK_BORDERS_DRY_RUN` | `false` | Set to `true` for preview mode |
+| Variable                    | Default                      | Description                                  |
+| --------------------------- | ---------------------------- | -------------------------------------------- |
+| `SHRINK_BORDERS_INPUT_DIR`  | `/images`                    | Input directory path                         |
+| `SHRINK_BORDERS_PADDING`    | `5`                          | Border width in pixels                       |
+| `SHRINK_BORDERS_OUTPUT_DIR` | (empty)                      | Output directory; empty triggers auto-detect |
+| `SHRINK_BORDERS_LOG_FILE`   | `/output/shrink-borders.log` | Log file path                                |
+| `SHRINK_BORDERS_DRY_RUN`    | `false`                      | Set to `true` for preview mode               |
 
 ### Configuration Methods
 
@@ -96,13 +96,13 @@ Use docker-compose for quick iteration:
 ```yaml
 # docker-compose.yml
 services:
-  shrink-borders:
-    build: .
-    volumes:
-      - ./test-images:/images:ro
-      - ./output:/output
-    environment:
-      - SHRINK_BORDERS_PADDING=5
+ shrink-borders:
+  build: .
+  volumes:
+   - ./test-images:/images:ro
+   - ./output:/output
+  environment:
+   - SHRINK_BORDERS_PADDING=5
 ```
 
 ```bash
@@ -135,19 +135,23 @@ docker run --rm \
 Configure container in TrueNAS web UI:
 
 **Container Settings:**
+
 - Image Repository: `ghcr.io/johnmathews/image-borders`
 - Image Tag: `latest`
 - Restart Policy: `Never` (one-off execution)
 
 **Storage (Host Path Volumes):**
+
 - `/mnt/pool/photos` → `/images` (Mount Path), Read Only: ✓
 - `/mnt/pool/processed` → `/output` (Mount Path)
 
 **Environment Variables:**
+
 - `SHRINK_BORDERS_PADDING`: `5`
 - `SHRINK_BORDERS_DRY_RUN`: `false`
 
 **Execution:**
+
 - Run as scheduled task via TrueNAS cron or manual execution
 - View logs in TrueNAS UI or via `docker logs`
 
@@ -167,6 +171,7 @@ docker run --rm \
 ```
 
 Cron schedule (daily at 2 AM):
+
 ```cron
 0 2 * * * /usr/local/bin/process-images.sh >> /var/log/shrink-borders.log 2>&1
 ```
@@ -279,6 +284,7 @@ cat output/shrink-borders.log
 Default: `/output/shrink-borders.log`
 
 Override with:
+
 ```bash
 -e SHRINK_BORDERS_LOG_FILE=/custom/path/log.txt
 ```
@@ -297,6 +303,7 @@ docker run --rm \
 ```
 
 Or set ownership on host:
+
 ```bash
 sudo chown -R 1000:1000 images/ output/
 ```
@@ -316,11 +323,13 @@ docker pull ghcr.io/johnmathews/image-borders:latest
 ### No Images Processed
 
 Check:
+
 1. Images are in mounted directory: `docker run ... ls /images`
 2. Supported formats: `.jpg`, `.jpeg`, `.png`
 3. Corner pixels match (4 corners must be same color)
 
 Enable dry-run to see detection details:
+
 ```bash
 -e SHRINK_BORDERS_DRY_RUN=true
 ```
@@ -328,11 +337,13 @@ Enable dry-run to see detection details:
 ### Container Exits Immediately
 
 Check logs:
+
 ```bash
 docker logs <container-id>
 ```
 
 Common causes:
+
 - Invalid directory path in CLI arguments
 - Permissions on mounted volumes
 - Missing required arguments
@@ -340,11 +351,13 @@ Common causes:
 ### Wrong Architecture
 
 Verify platform:
+
 ```bash
 docker inspect ghcr.io/johnmathews/image-borders:latest | grep Architecture
 ```
 
 Should show:
+
 - `amd64` on Intel/AMD systems
 - `arm64` on Apple Silicon
 
@@ -353,10 +366,12 @@ Should show:
 Container overhead is minimal (~10ms). Performance matches native execution.
 
 **Benchmarks:**
+
 - 100 images (1920×1080): ~45 seconds
 - ARM64 and AMD64: Similar performance
 
 **Optimization:**
+
 - Use read-only mounts (`:ro`) for input to prevent accidental modification
 - Mount `/output` on fast storage for better I/O
 - Consider tmpfs for logs if persistence not needed:
@@ -369,16 +384,19 @@ Container overhead is minimal (~10ms). Performance matches native execution.
 Images are automatically built and pushed to ghcr.io via GitHub Actions.
 
 **Triggers:**
+
 - Push to `main`: Builds and pushes `latest` tag
 - Version tags (`v*`): Builds and pushes semantic version tags
 - Pull requests: Builds for validation (no push)
 
 **Available Tags:**
+
 - `latest`: Most recent main branch build
 - `main-<sha>`: Specific commit from main
 - `v1.2.3`, `v1.2`, `v1`: Semantic version tags
 
 **Example:**
+
 ```bash
 # Latest stable
 docker pull ghcr.io/johnmathews/image-borders:latest
@@ -395,6 +413,7 @@ docker pull ghcr.io/johnmathews/image-borders:main-abc1234
 ### Custom Base Image
 
 Edit Dockerfile to use different Python version:
+
 ```dockerfile
 FROM python:3.12-slim AS builder
 ```
@@ -402,6 +421,7 @@ FROM python:3.12-slim AS builder
 ### Resource Limits
 
 Limit CPU and memory:
+
 ```bash
 docker run --rm \
   --cpus="2.0" \
@@ -413,6 +433,7 @@ docker run --rm \
 ### Network Isolation
 
 Container doesn't need network access:
+
 ```bash
 docker run --rm \
   --network none \
@@ -446,6 +467,7 @@ docker run --rm \
 Images are automatically scanned by GitHub for vulnerabilities.
 
 Manual scan:
+
 ```bash
 docker scan ghcr.io/johnmathews/image-borders:latest
 ```
@@ -453,5 +475,6 @@ docker scan ghcr.io/johnmathews/image-borders:latest
 ## Support
 
 For issues, questions, or contributions:
+
 - GitHub Issues: https://github.com/johnmathews/image-borders/issues
 - Documentation: https://github.com/johnmathews/image-borders
