@@ -2,15 +2,20 @@
 
 ## What It Does
 
-This script removes uniform color borders from images while preserving your specified amount of padding.
+This script removes uniform color borders from images and applies exactly uniform borders on all sides.
 
 - Scans directories recursively for `.jpg`, `.jpeg`, `.png` files
 - Detects uniform color borders by checking all 4 corners (must all match)
-- Crops to content boundaries plus your specified padding
+- Removes all existing borders (regardless of size or uniformity)
+- Adds back exactly uniform borders of your specified width on all sides
 - Saves processed images to a separate output directory
 - Logs all processing decisions to a log file
 
-The script requires all 4 corners to have the same color to detect a border. This prevents false positives like white skies being treated as borders. It won't work with gradients or multi-colored borders.
+The script requires all 4 corners to have the same color to detect a border. This prevents false positives like white
+skies being treated as borders. It won't work with gradients or multi-colored borders.
+
+**Key feature**: All output images will have exactly equal borders on all 4 sides, regardless of whether the input
+had unequal, wonky, or missing borders.
 
 ## How to Use It
 
@@ -23,25 +28,27 @@ uv sync
 ### Basic Usage
 
 ```bash
-# Process images (live mode by default)
+# Process images in-place (modifies originals)
 uv run python shrink_borders.py /path/to/images
 
 # Preview changes without processing (dry-run mode)
 uv run python shrink_borders.py /path/to/images --dry-run
 
+# Save to output directory (preserves originals)
+uv run python shrink_borders.py /path/to/images -o processed-images
+
 # Keep 10px border instead of default 5px
 uv run python shrink_borders.py /path/to/images -p 10
-
-# Custom output directory
-uv run python shrink_borders.py /path/to/images -o my-output
 ```
 
 ### Options
 
 ```text
--p, --padding N       Keep N pixels of border (default: 5)
+-p, --padding N       Uniform border width in pixels for all sides (default: 5)
+                      Images are cropped to content, then exactly N pixels of
+                      border are added to all 4 sides
 -o, --output-dir D    Output directory for processed images
-                      (default: processed-images)
+                      (if not specified, modifies images in-place)
 -l, --log-file P      Log file path (default: shrink-borders.log)
 --dry-run             Preview changes without processing files
 ```
@@ -52,12 +59,19 @@ uv run python shrink_borders.py /path/to/images -o my-output
 Processing: image.jpg
   Original size: 1920x1080
   Border color (4 corners match): (255, 255, 255)
-  Border widths - L:200 R:200 T:100 B:100
-  New size: 1520x880
-  Action: CROPPED - Saved to processed-images/image.jpg with 5px border
+  Detected borders - L:15 R:10 T:0 B:13
+  Max border: 15px
+  Content size: 1274x1857
+  New size with uniform 5px border: 1284x1867
+  Action: UNIFORM BORDERS APPLIED - Saved to processed-images/image.jpg with 5px border on all sides
 ```
 
-Or when corners don't match:
+The output shows:
+- Original detected borders (which are unequal: L:15 R:10 T:0 B:13)
+- The content size after removing all borders
+- The final size with exactly 5px uniform borders on all sides
+
+When corners don't match:
 
 ```text
 Processing: photo-with-sky.jpg
@@ -72,9 +86,13 @@ Processing: photo-with-sky.jpg
 
 ### Notes
 
-- Originals are preserved (processed images go to output directory)
-- Images are skipped if:
-  - All 4 corners don't have the same color (no uniform border detected)
-  - Border is already ≤ the specified padding
-  - No excess border detected
-- Use `--dry-run` to test before processing
+- **By default, images are modified in-place** (originals overwritten)
+- Use `-o` flag to save processed images to a separate directory (preserves originals)
+- Images are skipped if all 4 corners don't have the same color (no uniform border detected)
+- **All processed images will have exactly uniform borders** on all 4 sides equal to the padding value
+- The algorithm:
+  1. Detects where content starts/ends on each edge
+  2. Crops to pure content (removes ALL existing borders)
+  3. Adds uniform border of exactly the specified padding to all sides
+- Works with unequal borders (e.g., L:15 R:10 T:0 B:13) - output will be uniform (5px on all sides)
+- Always use `--dry-run` first to preview changes before processing

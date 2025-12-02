@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from typing import cast
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 
 def get_border_color(img: Image.Image) -> tuple[int, ...] | None:
@@ -43,21 +43,26 @@ def get_border_color(img: Image.Image) -> tuple[int, ...] | None:
     return None
 
 
-def find_content_bounds(
+def find_uniform_content_bounds(
     img: Image.Image, border_color: tuple[int, ...], padding: int
-) -> tuple[int, int, int, int]:
+) -> tuple[int, int, int, int, int, int, int, int, int]:
     """
-    Find the bounds of non-border content.
+    Find the bounds of non-border content and calculate crop for uniform borders.
 
-    Returns (left, top, right, bottom) coordinates with padding applied.
+    Returns (left_detected, right_detected, top_detected, bottom_detected,
+             content_left, content_top, content_right, content_bottom, max_border).
+
+    The detected values show the original border widths.
+    The content coordinates define the pure content area (all borders removed).
+    max_border is the maximum detected border width.
     """
     width, height = img.size
     pixels = img.load()
     if pixels is None:
-        return (0, 0, width, height)
+        return (0, 0, 0, 0, 0, 0, width, height, 0)
 
-    # Find left boundary
-    left = 0
+    # Find left boundary (detect where content starts)
+    left_content = 0
     for x in range(width):
         for y in range(height):
             pixel = pixels[x, y]
@@ -67,14 +72,14 @@ def find_content_bounds(
                 else tuple(int(c) for c in pixel)
             )
             if current_color != border_color:
-                left = max(0, x - padding)
+                left_content = x
                 break
         else:
             continue
         break
 
-    # Find right boundary
-    right = width
+    # Find right boundary (detect where content ends)
+    right_content = width - 1
     for x in range(width - 1, -1, -1):
         for y in range(height):
             pixel = pixels[x, y]
@@ -84,14 +89,14 @@ def find_content_bounds(
                 else tuple(int(c) for c in pixel)
             )
             if current_color != border_color:
-                right = min(width, x + 1 + padding)
+                right_content = x
                 break
         else:
             continue
         break
 
-    # Find top boundary
-    top = 0
+    # Find top boundary (detect where content starts)
+    top_content = 0
     for y in range(height):
         for x in range(width):
             pixel = pixels[x, y]
@@ -101,14 +106,14 @@ def find_content_bounds(
                 else tuple(int(c) for c in pixel)
             )
             if current_color != border_color:
-                top = max(0, y - padding)
+                top_content = y
                 break
         else:
             continue
         break
 
-    # Find bottom boundary
-    bottom = height
+    # Find bottom boundary (detect where content ends)
+    bottom_content = height - 1
     for y in range(height - 1, -1, -1):
         for x in range(width):
             pixel = pixels[x, y]
@@ -118,19 +123,40 @@ def find_content_bounds(
                 else tuple(int(c) for c in pixel)
             )
             if current_color != border_color:
-                bottom = min(height, y + 1 + padding)
+                bottom_content = y
                 break
         else:
             continue
         break
 
-    return (left, top, right, bottom)
+    # Calculate detected border widths
+    left_border = left_content
+    right_border = width - 1 - right_content
+    top_border = top_content
+    bottom_border = height - 1 - bottom_content
+
+    # Find the maximum border for reporting
+    max_border = max(left_border, right_border, top_border, bottom_border)
+
+    # Return content coordinates (all borders stripped)
+    # These define the pure content rectangle
+    return (
+        left_border,
+        right_border,
+        top_border,
+        bottom_border,
+        left_content,
+        top_content,
+        right_content + 1,  # +1 because crop is exclusive
+        bottom_content + 1,  # +1 because crop is exclusive
+        max_border,
+    )
 
 
 def process_image(
-    file_path: Path, padding: int, output_dir: Path, dry_run: bool = True
+    file_path: Path, padding: int, output_dir: Path | None, dry_run: bool = True
 ) -> None:
-    """Process a single image file to remove excess borders."""
+    """Process a single image file to remove all borders and add uniform borders."""
     logger = logging.getLogger(__name__)
 
     try:
@@ -150,60 +176,93 @@ def process_image(
             logger.info("  Border color (4 corners match): %s", border_color)
 
             # Find content boundaries
-            left, top, right, bottom = find_content_bounds(img, border_color, padding)
-
-            # Check if cropping is needed
-            if left == 0 and top == 0 and right == width and bottom == height:
-                logger.info("  Action: SKIP - No excess border detected")
-                return
-
-            crop_width = right - left
-            crop_height = bottom - top
-
-            # Calculate border widths
-            left_border = left
-            right_border = width - right
-            top_border = top
-            bottom_border = height - bottom
+            (
+                left_border,
+                right_border,
+                top_border,
+                bottom_border,
+                content_left,
+                content_top,
+                content_right,
+                content_bottom,
+                max_border,
+            ) = find_uniform_content_bounds(img, border_color, padding)
 
             logger.info(
-                "  Border widths - L:%d R:%d T:%d B:%d",
+                "  Detected borders - L:%d R:%d T:%d B:%d",
                 left_border,
                 right_border,
                 top_border,
                 bottom_border,
             )
-            logger.info("  New size: %dx%d", crop_width, crop_height)
+            logger.info("  Max border: %dpx", max_border)
+
+            # Check if there are any borders to process
+            if max_border == 0 and padding == 0:
+                logger.info("  Action: SKIP - No borders detected and no padding requested")
+                return
+
+            # Calculate what the content dimensions are
+            content_width = content_right - content_left
+            content_height = content_bottom - content_top
+
+            # Calculate final dimensions with uniform padding
+            final_width = content_width + (2 * padding)
+            final_height = content_height + (2 * padding)
+
+            logger.info("  Content size: %dx%d", content_width, content_height)
+            logger.info("  New size with uniform %dpx border: %dx%d", padding, final_width, final_height)
 
             if dry_run:
                 logger.info(
-                    "  Action: DRY-RUN - Would crop to (%d, %d, %d, %d)",
-                    left,
-                    top,
-                    right,
-                    bottom,
+                    "  Action: DRY-RUN - Would crop to content (%d, %d, %d, %d) then add %dpx uniform border",
+                    content_left,
+                    content_top,
+                    content_right,
+                    content_bottom,
+                    padding,
                 )
                 return
 
-            # Create output directory if it doesn't exist
-            output_dir.mkdir(parents=True, exist_ok=True)
+            # Step 1: Crop to pure content (remove all existing borders)
+            content_only = img.crop((content_left, content_top, content_right, content_bottom))
 
-            # Determine output path
-            output_path = output_dir / file_path.name
+            # Step 2: Add uniform border of exactly 'padding' pixels
+            # Convert border_color tuple to proper format for expand
+            if len(border_color) == 1:
+                fill_color = border_color[0]
+            else:
+                fill_color = border_color
 
-            # Crop and save
-            cropped = img.crop((left, top, right, bottom))
-            cropped.save(output_path)
-            logger.info(
-                "  Action: CROPPED - Saved to %s with %dpx border", output_path, padding
-            )
+            result = ImageOps.expand(content_only, border=padding, fill=fill_color)
+
+            # Determine output path and save
+            if output_dir:
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output_path = output_dir / file_path.name
+            else:
+                output_path = file_path
+
+            result.save(output_path)
+
+            if output_dir:
+                logger.info(
+                    "  Action: UNIFORM BORDERS APPLIED - Saved to %s with %dpx border on all sides",
+                    output_path,
+                    padding,
+                )
+            else:
+                logger.info(
+                    "  Action: UNIFORM BORDERS APPLIED - Modified in-place with %dpx border on all sides",
+                    padding,
+                )
 
     except Exception as e:
         logger.error("  Error processing %s: %s", file_path, e)
 
 
 def process_directory(
-    directory: Path, padding: int, output_dir: Path, dry_run: bool = True
+    directory: Path, padding: int, output_dir: Path | None, dry_run: bool = True
 ) -> None:
     """Recursively process all images in a directory."""
     logger = logging.getLogger(__name__)
@@ -257,14 +316,14 @@ def main() -> None:
         "--padding",
         type=int,
         default=5,
-        help="Number of border pixels to keep (default: 5)",
+        help="Uniform border width in pixels for all sides (default: 5). Images will be cropped or expanded to achieve exactly this border width on all edges.",
     )
     _ = parser.add_argument(
         "-o",
         "--output-dir",
         type=Path,
-        default=Path("processed-images"),
-        help="Output directory for processed images (default: processed-images)",
+        default=None,
+        help="Output directory for processed images (if not specified, modifies images in-place)",
     )
     _ = parser.add_argument(
         "-l",
@@ -285,7 +344,7 @@ def main() -> None:
     dry_run: bool = cast(bool, args.dry_run)
     directory: Path = cast(Path, args.directory)
     padding: int = cast(int, args.padding)
-    output_dir: Path = cast(Path, args.output_dir)
+    output_dir: Path | None = cast(Path | None, args.output_dir)
     log_file: Path = cast(Path, args.log_file)
 
     if not directory.exists():
@@ -304,7 +363,10 @@ def main() -> None:
     logger.info("%s", "=" * 80)
     logger.info("Directory: %s", directory)
     logger.info("Padding: %d pixels", padding)
-    logger.info("Output directory: %s", output_dir)
+    if output_dir:
+        logger.info("Output directory: %s", output_dir)
+    else:
+        logger.info("Output: In-place modification")
     logger.info("Log file: %s", log_file)
     logger.info("Mode: %s", "DRY-RUN" if dry_run else "LIVE")
     logger.info("%s", "=" * 80)
@@ -315,7 +377,10 @@ def main() -> None:
     logger.info("Processing complete!")
     logger.info("Log saved to: %s", log_file)
     if not dry_run:
-        logger.info("Processed images saved to: %s", output_dir)
+        if output_dir:
+            logger.info("Processed images saved to: %s", output_dir)
+        else:
+            logger.info("Images modified in-place")
     logger.info("%s", "=" * 80)
 
 

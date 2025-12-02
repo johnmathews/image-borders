@@ -6,10 +6,10 @@ with code in this repository.
 ## Project Overview
 
 A simple Python script to remove uniform color borders from images (.jpg,
-.jpeg, .png). The script detects borders by checking all 4 corners
-and crops to content while optionally preserving P pixels of border.
-Designed to be tactical and straightforward - doesn't need to cover all
-edge cases.
+.jpeg, .png) and apply exactly uniform borders on all sides. The script
+detects borders by checking all 4 corners, crops to pure content, then
+adds exactly P pixels of uniform border on all sides. Designed to be
+tactical and straightforward - doesn't need to cover all edge cases.
 
 ## Key Commands
 
@@ -17,11 +17,14 @@ edge cases.
 # Install dependencies
 uv sync
 
-# Run the script (live mode by default)
-uv run python shrink_borders.py <directory> [options]
+# Run the script in-place (modifies originals)
+uv run python shrink_borders.py <directory>
 
 # Test with dry run
 uv run python shrink_borders.py test-images --dry-run
+
+# Save to output directory (preserves originals)
+uv run python shrink_borders.py test-images -o processed-images
 
 # Run with padding
 uv run python shrink_borders.py test-images -p 10
@@ -36,26 +39,30 @@ flow:
    that color as border reference. If corners don't match, skips the image
    (prevents false positives like white skies)
 2. **Content bounds**: Scans from all four edges inward to find first
-   non-border pixel
-3. **Cropping logic**: Calculates crop coordinates with padding applied,
-   then crops if needed
-4. **Output**: Saves processed images to separate output directory
-   (preserves originals)
-5. **Logging**: Dual output to both console and log file showing all
-   decisions
+   non-border pixel on each edge
+3. **Uniform border application**: Two-step process:
+   - Crop to pure content (removes ALL existing borders completely)
+   - Add uniform border of exactly P pixels to all 4 sides using ImageOps.expand()
+4. **Output**: By default modifies images in-place. If `-o` flag provided,
+   saves to separate output directory (preserves originals)
+5. **Logging**: Dual output to both console and log file showing detected
+   borders, content size, and final dimensions
 
 Key functions:
 
 - `get_border_color()`: Checks all 4 corners, returns color if match or None
-- `find_content_bounds()`: Core algorithm that scans from edges inward
-- `process_image()`: Handles single image with logging
+- `find_uniform_content_bounds()`: Scans from edges inward to find content boundaries,
+  returns detected border widths and content crop coordinates
+- `process_image()`: Crops to content then adds uniform borders using ImageOps.expand()
 - `process_directory()`: Recursive directory traversal
 
 ## Important Constraints
 
 - Borders must be single uniform color (no gradients or multi-color)
 - All 4 corners must match to detect a border (prevents false positives)
-- Saves to output directory (originals preserved)
+- Default behavior modifies images in-place (use `-o` to preserve originals)
+- **All output images have exactly uniform borders on all 4 sides**
+- Works with any input border configuration (unequal, wonky, missing, etc.)
 - Python >=3.13 required
 - Keep code simple and readable - tactical tool, not production-grade
 - Use typed Python throughout

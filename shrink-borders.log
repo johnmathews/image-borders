@@ -5,7 +5,7 @@ Directory: test-images
 Padding: 5 pixels
 Output directory: processed-images
 Log file: shrink-borders.log
-Mode: DRY-RUN
+Mode: LIVE
 ================================================================================
 
 ================================================================================
@@ -25,37 +25,48 @@ Processing: test-images/Screenshot 2025-01-20 at 14.27.18.png
   Original size: 3894x2516
   Action: SKIP - No uniform border detected (corners don't match)
 Processing: test-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m33s.jpg
-  Original size: 2456x2032
+  Original size: 2288x1863
   Border color (4 corners match): (253, 253, 253)
-  Border widths - L:86 R:82 T:83 B:86
-  New size: 2288x1863
-  Action: DRY-RUN - Would crop to (86, 83, 2374, 1946)
+  Detected borders - L:0 R:0 T:0 B:6
+  Max border: 6px
+  Content size: 2288x1857
+  New size with uniform 5px border: 2298x1867
+  Action: UNIFORM BORDERS APPLIED - Saved to processed-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m33s.jpg with 5px border on all sides
 Processing: test-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m38s.jpg
-  Original size: 2456x2032
+  Original size: 2299x1870
   Border color (4 corners match): (253, 253, 253)
-  Border widths - L:75 R:82 T:87 B:75
-  New size: 2299x1870
-  Action: DRY-RUN - Would crop to (75, 87, 2374, 1957)
+  Detected borders - L:15 R:10 T:0 B:13
+  Max border: 15px
+  Content size: 2274x1857
+  New size with uniform 5px border: 2284x1867
+  Action: UNIFORM BORDERS APPLIED - Saved to processed-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m38s.jpg with 5px border on all sides
 Processing: test-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m43s.jpg
-  Original size: 2456x2036
+  Original size: 2299x1871
   Border color (4 corners match): (253, 253, 253)
-  Border widths - L:75 R:82 T:87 B:78
-  New size: 2299x1871
-  Action: DRY-RUN - Would crop to (75, 87, 2374, 1958)
+  Detected borders - L:15 R:10 T:0 B:14
+  Max border: 15px
+  Content size: 2274x1857
+  New size with uniform 5px border: 2284x1867
+  Action: UNIFORM BORDERS APPLIED - Saved to processed-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m43s.jpg with 5px border on all sides
 Processing: test-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m47s.jpg
-  Original size: 1688x2040
+  Original size: 1563x1907
   Border color (4 corners match): (253, 253, 253)
-  Border widths - L:59 R:66 T:67 B:66
-  New size: 1563x1907
-  Action: DRY-RUN - Would crop to (59, 67, 1622, 1974)
+  Detected borders - L:15 R:10 T:0 B:2
+  Max border: 15px
+  Content size: 1538x1905
+  New size with uniform 5px border: 1548x1915
+  Action: UNIFORM BORDERS APPLIED - Saved to processed-images/i-bought-my-dream-porsche-and-drove-it-across-california_11m47s.jpg with 5px border on all sides
 Processing: test-images/i-bought-my-dream-porsche-and-drove-it-across-california_17m28s.jpg
-  Original size: 2526x2090
+  Original size: 2351x1916
   Border color (4 corners match): (253, 253, 253)
-  Border widths - L:87 R:88 T:90 B:84
-  New size: 2351x1916
-  Action: DRY-RUN - Would crop to (87, 90, 2438, 2006)
+  Detected borders - L:6 R:0 T:0 B:11
+  Max border: 11px
+  Content size: 2345x1905
+  New size with uniform 5px border: 2355x1915
+  Action: UNIFORM BORDERS APPLIED - Saved to processed-images/i-bought-my-dream-porsche-and-drove-it-across-california_17m28s.jpg with 5px border on all sides
 
 ================================================================================
 Processing complete!
 Log saved to: shrink-borders.log
+Processed images saved to: processed-images
 ================================================================================
