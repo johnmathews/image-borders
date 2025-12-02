@@ -96,3 +96,121 @@ Processing: photo-with-sky.jpg
   3. Adds uniform border of exactly the specified padding to all sides
 - Works with unequal borders (e.g., L:15 R:10 T:0 B:13) - output will be uniform (5px on all sides)
 - Always use `--dry-run` first to preview changes before processing
+
+## Docker Usage
+
+The tool is available as a Docker container with multi-architecture support for both Intel/AMD (TrueNAS) and Apple Silicon systems.
+
+### Quick Start
+
+```bash
+# Pull the image
+docker pull ghcr.io/johnmathews/image-borders:latest
+
+# Process images (auto-detects output mode)
+docker run --rm \
+  -v "$(pwd)/images":/images:ro \
+  -v "$(pwd)/output":/output \
+  ghcr.io/johnmathews/image-borders:latest
+```
+
+### Configuration
+
+The container can be configured via environment variables or command-line arguments.
+
+#### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SHRINK_BORDERS_INPUT_DIR` | `/images` | Input directory path |
+| `SHRINK_BORDERS_PADDING` | `5` | Border width in pixels |
+| `SHRINK_BORDERS_OUTPUT_DIR` | (empty) | Output directory; empty means auto-detect |
+| `SHRINK_BORDERS_LOG_FILE` | `/output/shrink-borders.log` | Log file path |
+| `SHRINK_BORDERS_DRY_RUN` | `false` | Set to `true` for preview mode |
+
+#### Auto-detect Behavior
+
+The container intelligently detects your intent based on volume mounts:
+
+- **Both `/images` and `/output` mounted**: Saves processed images to `/output`, preserves originals
+- **Only `/images` mounted**: Modifies images in-place
+
+You can override this by setting `SHRINK_BORDERS_OUTPUT_DIR` explicitly.
+
+### Usage Examples
+
+#### Custom padding
+
+```bash
+docker run --rm \
+  -v "$(pwd)/images":/images:ro \
+  -v "$(pwd)/output":/output \
+  -e SHRINK_BORDERS_PADDING=10 \
+  ghcr.io/johnmathews/image-borders:latest
+```
+
+#### Dry run (preview changes)
+
+```bash
+docker run --rm \
+  -v "$(pwd)/images":/images \
+  -e SHRINK_BORDERS_DRY_RUN=true \
+  ghcr.io/johnmathews/image-borders:latest
+```
+
+#### In-place modification
+
+```bash
+docker run --rm \
+  -v "$(pwd)/images":/images \
+  ghcr.io/johnmathews/image-borders:latest
+```
+
+#### Direct CLI arguments
+
+```bash
+docker run --rm \
+  -v "$(pwd)/photos":/data \
+  ghcr.io/johnmathews/image-borders:latest \
+  /data -p 10 -o /data/processed
+```
+
+### Docker Compose
+
+Create a `docker-compose.yml`:
+
+```yaml
+services:
+  shrink-borders:
+    image: ghcr.io/johnmathews/image-borders:latest
+    volumes:
+      - ./images:/images:ro
+      - ./output:/output
+    environment:
+      - SHRINK_BORDERS_PADDING=5
+```
+
+Run with: `docker-compose run --rm shrink-borders`
+
+### TrueNAS Integration
+
+The Docker image works seamlessly with TrueNAS SCALE:
+
+1. **Add Container** in TrueNAS Apps
+2. **Image**: `ghcr.io/johnmathews/image-borders:latest`
+3. **Storage**:
+   - Mount your photo dataset to `/images` (read-only recommended)
+   - Mount output dataset to `/output`
+4. **Environment Variables**: Set as needed (e.g., `SHRINK_BORDERS_PADDING=5`)
+5. **Restart Policy**: `Never` (for one-off execution)
+6. Run as scheduled task or manual execution
+
+### More Information
+
+See [DOCKER.md](DOCKER.md) for comprehensive Docker documentation including:
+- Architecture details
+- Building locally
+- Troubleshooting
+- Performance optimization
+- Security considerations
+- Advanced usage patterns

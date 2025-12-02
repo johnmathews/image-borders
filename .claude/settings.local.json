@@ -9,7 +9,11 @@
       "Bash(git -C /Users/john/projects/photo-video/shrink-borders status --short)",
       "Bash(python3:*)",
       "Bash(git mv:*)",
-      "Bash(git -C /Users/john/projects/photo-video/shrink-borders remote:*)"
+      "Bash(git -C /Users/john/projects/photo-video/shrink-borders remote:*)",
+      "Bash(cat:*)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

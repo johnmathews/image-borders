@@ -1,0 +1,13 @@
+services:
+  shrink-borders:
+    build: .
+    image: shrink-borders:local
+    volumes:
+      - ./test-images:/images:ro
+      - ./output:/output
+    environment:
+      - SHRINK_BORDERS_PADDING=5
+      # OUTPUT_DIR will be auto-detected since both /images and /output are mounted
+      - SHRINK_BORDERS_DRY_RUN=false
+    # Match host user to avoid permission issues (optional, uncomment if needed)
+    # user: "${UID:-1000}:${GID:-1000}"
