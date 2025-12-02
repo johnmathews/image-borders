@@ -9,14 +9,38 @@ from typing import cast
 from PIL import Image
 
 
-def get_border_color(img: Image.Image) -> tuple[int, ...]:
-    """Get the border color from the top-left corner pixel."""
-    pixel = img.getpixel((0, 0))
-    if isinstance(pixel, (int, float)):
-        return (int(pixel),)
-    if pixel is None:
-        return (0,)
-    return tuple(int(c) for c in pixel)  # type: ignore[union-attr]
+def get_border_color(img: Image.Image) -> tuple[int, ...] | None:
+    """
+    Get the border color by checking all 4 corners.
+
+    Returns the color if all 4 corners match, None otherwise.
+    """
+    width, height = img.size
+
+    # Get all 4 corner pixels
+    corners = [
+        img.getpixel((0, 0)),  # top-left
+        img.getpixel((width - 1, 0)),  # top-right
+        img.getpixel((0, height - 1)),  # bottom-left
+        img.getpixel((width - 1, height - 1)),  # bottom-right
+    ]
+
+    # Normalize each corner pixel to tuple format
+    normalized_corners: list[tuple[int, ...]] = []
+    for pixel in corners:
+        if isinstance(pixel, (int, float)):
+            normalized_corners.append((int(pixel),))
+        elif pixel is None:
+            normalized_corners.append((0,))
+        else:
+            normalized_corners.append(tuple(int(c) for c in pixel))  # type: ignore[union-attr]
+
+    # Check if all corners match
+    first_corner: tuple[int, ...] = normalized_corners[0]
+    if all(corner == first_corner for corner in normalized_corners):
+        return first_corner
+
+    return None
 
 
 def find_content_bounds(
@@ -116,7 +140,14 @@ def process_image(
 
             logger.info("Processing: %s", file_path)
             logger.info("  Original size: %dx%d", width, height)
-            logger.info("  Border color: %s", border_color)
+
+            if border_color is None:
+                logger.info(
+                    "  Action: SKIP - No uniform border detected (corners don't match)"
+                )
+                return
+
+            logger.info("  Border color (4 corners match): %s", border_color)
 
             # Find content boundaries
             left, top, right, bottom = find_content_bounds(img, border_color, padding)
