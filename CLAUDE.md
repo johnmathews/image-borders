@@ -17,11 +17,11 @@ edge cases.
 # Install dependencies
 uv sync
 
-# Run the script
+# Run the script (live mode by default)
 uv run python shrink_borders.py <directory> [options]
 
 # Test with dry run
-uv run python shrink_borders.py test-images -n
+uv run python shrink_borders.py test-images --dry-run
 
 # Run with padding
 uv run python shrink_borders.py test-images -p 10
@@ -38,8 +38,8 @@ flow:
    non-border pixel
 3. **Cropping logic**: Calculates crop coordinates with padding applied,
    then crops if needed
-4. **In-place modification**: Overwrites original files (destructive
-   operation)
+4. **Output**: Saves processed images to separate output directory
+   (preserves originals)
 5. **Logging**: Dual output to both console and log file showing all
    decisions
 
@@ -53,7 +53,7 @@ Key functions:
 
 - Borders must be single uniform color (no gradients or multi-color)
 - Border color determined by top-left pixel only
-- Modifies files in-place (no backup created)
+- Saves to output directory (originals preserved)
 - Python >=3.13 required
 - Keep code simple and readable - tactical tool, not production-grade
 - Use typed Python throughout
