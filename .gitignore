@@ -3,3 +3,13 @@
 /output
 /test-output
 .DS_Store
+
+# Python / tooling
+__pycache__/
+*.py[oc]
+*.log
+.venv
+.coverage
+htmlcov/
+.ruff_cache/
+.pytest_cache/
