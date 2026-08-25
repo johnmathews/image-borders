@@ -8,6 +8,10 @@ from typing import cast
 
 from PIL import Image, ImageOps
 
+type FillColor = int | tuple[int, ...]
+
+IMAGE_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png"})
+
 
 def get_border_color(img: Image.Image) -> tuple[int, ...] | None:
     """
@@ -66,11 +70,7 @@ def find_uniform_content_bounds(
     for x in range(width):
         for y in range(height):
             pixel = pixels[x, y]
-            current_color = (
-                (int(pixel),)
-                if isinstance(pixel, (int, float))
-                else tuple(int(c) for c in pixel)
-            )
+            current_color = (int(pixel),) if isinstance(pixel, (int, float)) else tuple(int(c) for c in pixel)
             if current_color != border_color:
                 left_content = x
                 break
@@ -83,11 +83,7 @@ def find_uniform_content_bounds(
     for x in range(width - 1, -1, -1):
         for y in range(height):
             pixel = pixels[x, y]
-            current_color = (
-                (int(pixel),)
-                if isinstance(pixel, (int, float))
-                else tuple(int(c) for c in pixel)
-            )
+            current_color = (int(pixel),) if isinstance(pixel, (int, float)) else tuple(int(c) for c in pixel)
             if current_color != border_color:
                 right_content = x
                 break
@@ -100,11 +96,7 @@ def find_uniform_content_bounds(
     for y in range(height):
         for x in range(width):
             pixel = pixels[x, y]
-            current_color = (
-                (int(pixel),)
-                if isinstance(pixel, (int, float))
-                else tuple(int(c) for c in pixel)
-            )
+            current_color = (int(pixel),) if isinstance(pixel, (int, float)) else tuple(int(c) for c in pixel)
             if current_color != border_color:
                 top_content = y
                 break
@@ -117,11 +109,7 @@ def find_uniform_content_bounds(
     for y in range(height - 1, -1, -1):
         for x in range(width):
             pixel = pixels[x, y]
-            current_color = (
-                (int(pixel),)
-                if isinstance(pixel, (int, float))
-                else tuple(int(c) for c in pixel)
-            )
+            current_color = (int(pixel),) if isinstance(pixel, (int, float)) else tuple(int(c) for c in pixel)
             if current_color != border_color:
                 bottom_content = y
                 break
@@ -153,9 +141,41 @@ def find_uniform_content_bounds(
     )
 
 
-def process_image(
-    file_path: Path, padding: int, output_dir: Path | None, dry_run: bool = True
-) -> None:
+def white_fill_for(img: Image.Image) -> tuple[Image.Image, FillColor]:
+    """
+    Return the image (converted to RGB if needed) and the white fill colour for its mode.
+
+    Used when no uniform border is detected and a white border must be added.
+    """
+    if img.mode == "L":
+        return img, 255
+    if img.mode == "RGB":
+        return img, (255, 255, 255)
+    if img.mode == "RGBA":
+        return img, (255, 255, 255, 255)
+    # For other modes (palette, 1-bit, CMYK, ...), convert to RGB first
+    return img.convert("RGB"), (255, 255, 255)
+
+
+def resolve_output_path(file_path: Path, output_dir: Path | None) -> Path:
+    """
+    Return where the processed image should be written.
+
+    With an output directory, files are written flat into it (same file name);
+    without one, the original file is overwritten in place.
+    """
+    if output_dir is None:
+        return file_path
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return output_dir / file_path.name
+
+
+def find_image_files(directory: Path) -> list[Path]:
+    """Recursively find all .jpg/.jpeg/.png files under a directory, sorted by path."""
+    return sorted(f for f in directory.rglob("*") if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS)
+
+
+def process_image(file_path: Path, padding: int, output_dir: Path | None, dry_run: bool = True) -> None:
     """Process a single image file to remove all borders and add uniform borders."""
     logger = logging.getLogger(__name__)
 
@@ -177,25 +197,10 @@ def process_image(
                     return
 
                 # Use white as default border color for images without borders
-                # Determine if image is grayscale or color
-                if img.mode == 'L':
-                    fill_color = 255  # White for grayscale
-                elif img.mode in ('RGB', 'RGBA'):
-                    fill_color = (255, 255, 255) if img.mode == 'RGB' else (255, 255, 255, 255)
-                else:
-                    # For other modes, convert to RGB first
-                    img = img.convert('RGB')
-                    fill_color = (255, 255, 255)
+                source, fill_color = white_fill_for(img)
+                result = ImageOps.expand(source, border=padding, fill=fill_color)
 
-                # Add uniform border to entire image
-                result = ImageOps.expand(img, border=padding, fill=fill_color)
-
-                # Determine output path and save
-                if output_dir:
-                    output_path = output_dir / file_path.name
-                else:
-                    output_path = file_path
-
+                output_path = resolve_output_path(file_path, output_dir)
                 result.save(output_path)
                 logger.info(
                     "  Action: UNIFORM BORDER ADDED - Saved to %s with %dpx border on all sides",
@@ -260,20 +265,10 @@ def process_image(
 
             # Step 2: Add uniform border of exactly 'padding' pixels
             # Convert border_color tuple to proper format for expand
-            if len(border_color) == 1:
-                fill_color = border_color[0]
-            else:
-                fill_color = border_color
+            fill: FillColor = border_color[0] if len(border_color) == 1 else border_color
+            result = ImageOps.expand(content_only, border=padding, fill=fill)
 
-            result = ImageOps.expand(content_only, border=padding, fill=fill_color)
-
-            # Determine output path and save
-            if output_dir:
-                output_dir.mkdir(parents=True, exist_ok=True)
-                output_path = output_dir / file_path.name
-            else:
-                output_path = file_path
-
+            output_path = resolve_output_path(file_path, output_dir)
             result.save(output_path)
 
             if output_dir:
@@ -288,13 +283,11 @@ def process_image(
                     padding,
                 )
 
-    except Exception as e:
+    except (OSError, ValueError, Image.DecompressionBombError) as e:
         logger.error("  Error processing %s: %s", file_path, e)
 
 
-def process_directory(
-    directory: Path, padding: int, output_dir: Path | None, dry_run: bool = True
-) -> None:
+def process_directory(directory: Path, padding: int, output_dir: Path | None, dry_run: bool = True) -> None:
     """Recursively process all images in a directory."""
     logger = logging.getLogger(__name__)
 
@@ -302,13 +295,7 @@ def process_directory(
     logger.info("Scanning directory: %s", directory)
     logger.info("%s", "=" * 80)
 
-    # Find all image files
-    image_extensions = {".jpg", ".jpeg", ".png"}
-    image_files = [
-        f
-        for f in directory.rglob("*")
-        if f.is_file() and f.suffix.lower() in image_extensions
-    ]
+    image_files = find_image_files(directory)
 
     if not image_files:
         logger.info("No image files found in %s", directory)
@@ -316,7 +303,7 @@ def process_directory(
 
     logger.info("Found %d image(s)", len(image_files))
 
-    for image_file in sorted(image_files):
+    for image_file in image_files:
         process_image(image_file, padding, output_dir, dry_run)
 
 
@@ -347,7 +334,10 @@ def main() -> None:
         "--padding",
         type=int,
         default=5,
-        help="Uniform border width in pixels for all sides (default: 5). Images will be cropped or expanded to achieve exactly this border width on all edges.",
+        help=(
+            "Uniform border width in pixels for all sides (default: 5). "
+            "Images will be cropped or expanded to achieve exactly this border width on all edges."
+        ),
     )
     _ = parser.add_argument(
         "-o",

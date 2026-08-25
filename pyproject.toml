@@ -10,3 +10,30 @@ dependencies = [
 
 [project.scripts]
 shrink-borders = "shrink_borders:main"
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "pyright",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["shrink_borders"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "DTZ", "BLE", "PL", "RUF"]
+ignore = ["PLR0913", "PLR0912", "PLR0915", "PLR2004"]
+
+[tool.pyright]
+typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"
