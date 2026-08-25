@@ -49,3 +49,8 @@ uv.lock
 
 # Plans
 *.plan.md
+
+# Not needed in the image
+docs/
+tests/
+journal/

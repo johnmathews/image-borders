@@ -8,8 +8,8 @@ This script removes uniform color borders from images and applies exactly unifor
 - Detects uniform color borders by checking all 4 corners
 - **If borders detected**: Removes all existing borders and adds back uniform borders
 - **If no borders detected**: Adds uniform borders to the entire image (using white)
-- Saves processed images to a separate output directory
-- Logs all processing decisions to a log file
+- Modifies images in-place by default, or saves them to a separate output directory with `-o`
+- Logs all processing decisions to the console and a log file
 
 **Key feature**: All output images will have exactly equal borders on all 4 sides, regardless of whether the input
 had unequal, wonky, missing, or no borders at all.
@@ -41,14 +41,24 @@ uv run python shrink_borders.py /path/to/images -p 10
 ### Options
 
 ```text
--p, --padding N       Uniform border width in pixels for all sides (default: 5)
-                      Images are cropped to content, then exactly N pixels of
-                      border are added to all 4 sides
--o, --output-dir D    Output directory for processed images
-                      (if not specified, modifies images in-place)
--l, --log-file P      Log file path (default: shrink-borders.log)
---dry-run             Preview changes without processing files
+usage: shrink_borders.py [-h] [-p PADDING] [-o OUTPUT_DIR] [-l LOG_FILE] [--dry-run] directory
+
+positional arguments:
+  directory             Directory to process (will scan recursively)
+
+options:
+  -h, --help            show this help message and exit
+  -p, --padding PADDING
+                        Uniform border width in pixels for all sides (default: 5). Images will be
+                        cropped or expanded to achieve exactly this border width on all edges.
+  -o, --output-dir OUTPUT_DIR
+                        Output directory for processed images (if not specified, modifies images in-place)
+  -l, --log-file LOG_FILE
+                        Path to log file (default: shrink-borders.log)
+  --dry-run             Preview changes without processing files (default is live mode)
 ```
+
+See [docs/how-it-works.md](docs/how-it-works.md) for the detection algorithm and output layout in detail.
 
 ### Example Output
 
@@ -88,7 +98,8 @@ In this case, a white border is added around the entire image without removing a
 ### Notes
 
 - **By default, images are modified in-place** (originals overwritten)
-- Use `-o` flag to save processed images to a separate directory (preserves originals)
+- Use `-o` flag to save processed images to a separate directory (preserves originals). Output is flat:
+  `OUTPUT_DIR/<file name>`, input sub-directories are not recreated
 - **All processed images will have exactly uniform borders** on all 4 sides equal to the padding value
 - The algorithm for images WITH uniform borders:
   1. Detects where content starts/ends on each edge
@@ -99,6 +110,20 @@ In this case, a white border is added around the entire image without removing a
   - No content is removed
 - Works with unequal borders (e.g., L:15 R:10 T:0 B:13) - output will be uniform (5px on all sides)
 - Always use `--dry-run` first to preview changes before processing
+
+## Development
+
+```bash
+uv sync                          # runtime + dev dependencies
+uv run python -m pytest          # tests
+uv run python -m pytest --cov    # tests with coverage
+uv run ruff check .              # lint
+uv run ruff format .             # format
+uv run pyright                   # type check
+```
+
+Tests live in `tests/` and build their images with Pillow at run time, so there are no image fixtures to maintain.
+CI (`.github/workflows/test.yml`) runs the same three commands on every push and pull request.
 
 ## Docker Usage
 
@@ -210,7 +235,7 @@ The Docker image works seamlessly with TrueNAS SCALE:
 
 ### More Information
 
-See [DOCKER.md](DOCKER.md) for comprehensive Docker documentation including:
+See [docs/docker.md](docs/docker.md) for comprehensive Docker documentation including:
 - Architecture details
 - Building locally
 - Troubleshooting
